@@ -1,0 +1,1806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GlowCube Ultimate</title>
+<meta name="theme-color" content="#2563eb">
+<meta name="description" content="GlowCube Ultimate - game puzzle neon by Fatur Entertainment">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GlowCube">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+-webkit-tap-highlight-color:transparent;
+}
+body{
+min-height:100vh;
+overflow:hidden;
+background: linear-gradient(180deg,#2563eb,#0f172a);
+color:white;
+}
+.bg-glow{
+position:fixed;
+width:500px;
+height:500px;
+border-radius:50%;
+background:rgba(15,23,42,0.75);
+filter:blur(80px);
+animation:bgMove 10s infinite alternate;
+z-index:-1;
+}
+@keyframes bgMove{
+0%{transform:translate(-100px,-100px);}
+100%{transform:translate(100px,100px);}
+}
+.flash{
+animation:flashAnim 0.5s ease;
+}
+@keyframes flashAnim{
+0%{background:rgba(255,255,255,0.8);}
+100%{background:transparent;}
+}
+#menuScreen{
+position:fixed;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:99999;
+}
+.logo{
+font-size:clamp(40px,15vw,65px);
+font-weight:bold;
+margin-bottom:70px;
+background:linear-gradient(90deg,#ffd60a,#ff006e,#4cc9f0);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+text-shadow:0 0 25px rgba(255,255,255,0.4);
+}
+.menu-box{
+display:flex;
+flex-direction:column;
+gap:25px;
+width:90%;
+max-width:320px;
+}
+.menu-btn{
+width:100%;
+padding:22px;
+border:none;
+border-radius:22px;
+font-size:28px;
+font-weight:bold;
+color:white;
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+transition:0.2s;
+}
+.menu-btn:active{transform:scale(0.96);}
+.play-btn{background:linear-gradient(90deg,#f59e0b,#facc15);}
+.score-btn{background:linear-gradient(90deg,#9333ea,#ec4899);}
+#gameContainer{
+display:none;
+min-height:100vh;
+flex-direction:column;
+align-items:center;
+padding:10px;
+}
+h1{
+font-size:clamp(28px,8vw,38px);
+margin-bottom:10px;
+background:linear-gradient(90deg,#ffd60a,#ffffff,#4cc9f0);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+.info-row{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+justify-content:center;
+margin:10px 0;
+}
+.score-box,
+.level-box,
+.coin-box{
+padding:10px 16px;
+border-radius:12px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(10px);
+font-weight:bold;
+}
+
+#board{
+margin-top:10px;
+display:grid;
+grid-template-columns:repeat(8, min(42px, 10vw));
+grid-template-rows:repeat(8, min(42px, 10vw));
+gap:3px;
+padding:8px;
+border-radius:15px;
+background:rgba(255,255,255,0.05);
+box-shadow:0 0 30px rgba(76,201,240,0.3);
+}
+.cell{
+width:min(42px, 10vw);
+height:min(42px, 10vw);
+border-radius:8px;
+background:rgba(255,255,255,0.08);
+transition:0.1s;
+will-change:transform;
+transform:translateZ(0);
+}
+.filled{animation:pop 0.2s ease;}
+@keyframes pop{
+0%{transform:scale(0);}
+100%{transform:scale(1);}
+}
+#pieces{
+margin-top:15px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+justify-content:center;
+min-height:100px;
+align-items:center;
+}
+.piece{
+display:grid;
+gap:2px;
+padding:8px;
+border-radius:12px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(10px);
+touch-action:none;
+}
+.block{
+width:28px;
+height:28px;
+border-radius:8px;
+
+box-shadow:
+0 0 12px rgba(255,255,255,0.5),
+0 0 25px rgba(255,255,255,0.25);
+
+transition:0.15s;
+will-change:transform;
+transform:translateZ(0);
+}
+#nextBlocks{
+margin-top:10px;
+display:flex;
+gap:10px;
+justify-content:center;
+flex-wrap:wrap;
+}
+.next-piece{
+display:grid;
+gap:2px;
+padding:6px;
+border-radius:10px;
+background:rgba(255,255,255,0.08);
+}
+.particle{
+position:fixed;
+width:10px;
+height:10px;
+border-radius:50%;
+pointer-events:none;
+animation:particleFly 0.8s linear forwards;
+z-index:999999;
+}
+@keyframes particleFly{
+0%{transform:translate(0,0) scale(1); opacity:1;}
+100%{transform:translate(var(--x),var(--y)) scale(0); opacity:0;}
+}
+.combo-text{
+position:fixed;
+top:20px;
+right:20px;
+font-size:24px;
+color:#ffd60a;
+font-weight:bold;
+animation:comboAnim 1s ease;
+z-index:99999;
+}
+@keyframes comboAnim{
+0%{transform:scale(0); opacity:0;}
+50%{transform:scale(1.5); opacity:1;}
+100%{transform:translateY(-50px); opacity:0;}
+}
+.explode{animation:explode 0.4s ease;}
+@keyframes explode{
+0%{transform:scale(1); opacity:1;}
+100%{transform:scale(0); opacity:0;}
+}
+.shake{animation:shake 0.3s;}
+@keyframes shake{
+0%{transform:translateX(0);}
+25%{transform:translateX(-8px);}
+50%{transform:translateX(8px);}
+75%{transform:translateX(-8px);}
+100%{transform:translateX(0);}
+}
+#topMenu{
+position:fixed;
+top:15px;
+right:15px;
+z-index:999999;
+}
+
+#menuBtn{
+width:50px;
+height:50px;
+border:none;
+border-radius:14px;
+font-size:28px;
+font-weight:bold;
+background:rgba(255,255,255,0.12);
+backdrop-filter:blur(10px);
+color:white;
+box-shadow:0 5px 20px rgba(0,0,0,0.25);
+}
+
+#menuBtn:active{
+transform:scale(0.95);
+}
+
+#dropdownMenu{
+position:absolute;
+top:60px;
+right:0;
+display:none;
+flex-direction:column;
+gap:10px;
+padding:12px;
+border-radius:16px;
+background:rgba(15,23,42,0.95);
+backdrop-filter:blur(12px);
+box-shadow:0 10px 30px rgba(0,0,0,0.35);
+min-width:160px;
+}
+
+#dropdownMenu button{
+border:none;
+padding:14px;
+border-radius:12px;
+font-size:18px;
+font-weight:bold;
+color:white;
+background:rgba(255,255,255,0.08);
+}
+
+#dropdownMenu button:active{
+transform:scale(0.96);
+}
+#highScoreScreen{
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.45);
+backdrop-filter:blur(10px);
+z-index:999999;
+}
+
+.highscore-card{
+position:relative;
+width:90%;
+max-width:360px;
+padding:40px 25px;
+border-radius:30px;
+overflow:hidden;
+background:linear-gradient(180deg,
+rgba(255,255,255,0.12),
+rgba(255,255,255,0.05));
+backdrop-filter:blur(15px);
+box-shadow:
+0 0 40px rgba(255,215,0,0.35),
+0 0 80px rgba(255,0,110,0.2);
+text-align:center;
+}
+
+.highscore-title{
+font-size:34px;
+font-weight:bold;
+margin-bottom:30px;
+background:linear-gradient(90deg,#ffd60a,#ff006e,#4cc9f0);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.highscore-value{
+font-size:75px;
+font-weight:bold;
+color:white;
+text-shadow:
+0 0 20px #ffd60a,
+0 0 40px #ff006e;
+margin-bottom:35px;
+animation:pulseScore 2s infinite;
+}
+
+@keyframes pulseScore{
+0%{transform:scale(1);}
+50%{transform:scale(1.08);}
+100%{transform:scale(1);}
+}
+
+.highscore-glow{
+position:absolute;
+width:250px;
+height:250px;
+border-radius:50%;
+background:rgba(255,215,0,0.15);
+filter:blur(60px);
+top:-80px;
+left:50%;
+transform:translateX(-50%);
+z-index:-1;
+}
+
+.back-btn{
+width:100%;
+padding:18px;
+border:none;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+color:white;
+background:linear-gradient(90deg,#9333ea,#ec4899);
+box-shadow:0 8px 20px rgba(0,0,0,0.3);
+}
+
+.back-btn:active{
+transform:scale(0.96);
+}
+#gameOverScreen{
+position:fixed;
+inset:0;
+display:none;
+justify-content:center;
+align-items:center;
+background:rgba(0,0,0,0.55);
+backdrop-filter:blur(12px);
+z-index:9999999;
+animation:fadeGameOver 0.3s ease;
+}
+
+@keyframes fadeGameOver{
+from{
+opacity:0;
+transform:scale(1.1);
+}
+to{
+opacity:1;
+transform:scale(1);
+}
+}
+
+.gameover-card{
+width:90%;
+max-width:360px;
+padding:40px 25px;
+border-radius:32px;
+text-align:center;
+background:linear-gradient(180deg,
+rgba(255,255,255,0.12),
+rgba(255,255,255,0.05));
+backdrop-filter:blur(20px);
+box-shadow:
+0 0 40px rgba(255,0,110,0.35),
+0 0 80px rgba(255,214,10,0.15);
+}
+
+.gameover-title{
+font-size:42px;
+font-weight:bold;
+margin-bottom:25px;
+background:linear-gradient(90deg,#ff006e,#ffd60a);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+animation:gameOverPulse 1.5s infinite;
+}
+
+@keyframes gameOverPulse{
+0%{transform:scale(1);}
+50%{transform:scale(1.08);}
+100%{transform:scale(1);}
+}
+
+.final-score-label{
+font-size:20px;
+opacity:0.8;
+margin-bottom:10px;
+}
+
+.final-score{
+font-size:78px;
+font-weight:bold;
+margin-bottom:35px;
+text-shadow:
+0 0 20px #ffd60a,
+0 0 40px #ff006e;
+}
+
+.gameover-buttons{
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+
+.restart-btn,
+.home-btn{
+border:none;
+padding:18px;
+border-radius:18px;
+font-size:22px;
+font-weight:bold;
+color:white;
+}
+
+.restart-btn{
+background:linear-gradient(90deg,#06d6a0,#3a86ff);
+}
+
+.home-btn{
+background:linear-gradient(90deg,#9333ea,#ec4899);
+}
+
+.restart-btn:active,
+.home-btn:active{
+transform:scale(0.96);
+}
+.big-combo-text{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%) scale(0);
+font-size:60px;
+font-weight:bold;
+z-index:99999999;
+pointer-events:none;
+text-align:center;
+
+background:linear-gradient(
+90deg,
+#ffd60a,
+#ff006e,
+#4cc9f0
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 20px rgba(255,255,255,0.5),
+0 0 40px rgba(255,214,10,0.6);
+
+animation:bigComboAnim 1s ease forwards;
+}
+
+@keyframes bigComboAnim{
+
+0%{
+transform:translate(-50%,-50%) scale(0);
+opacity:0;
+}
+
+20%{
+transform:translate(-50%,-50%) scale(1.4);
+opacity:1;
+}
+
+80%{
+transform:translate(-50%,-50%) scale(1);
+opacity:1;
+}
+
+100%{
+transform:translate(-50%,-120%) scale(0.8);
+opacity:0;
+}
+}
+#splashScreen{
+position:fixed;
+inset:0;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+background:linear-gradient(180deg,#0f172a,#020617);
+z-index:999999999;
+animation:splashFadeOut 1s ease forwards;
+animation-delay:2.5s;
+}
+
+@keyframes splashFadeOut{
+to{
+opacity:0;
+visibility:hidden;
+}
+}
+
+.splash-logo{
+font-size:clamp(50px,16vw,90px);
+font-weight:bold;
+
+background:linear-gradient(
+90deg,
+#ffd60a,
+#ff006e,
+#4cc9f0
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 20px rgba(255,255,255,0.4),
+0 0 40px rgba(255,214,10,0.5);
+
+animation:splashPop 1.2s ease;
+}
+
+.splash-text{
+margin-top:18px;
+font-size:18px;
+letter-spacing:4px;
+opacity:0.8;
+
+animation:splashText 2s ease infinite;
+}
+
+@keyframes splashPop{
+0%{
+transform:scale(0.5);
+opacity:0;
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+}
+}
+
+@keyframes splashText{
+0%{opacity:0.3;}
+50%{opacity:1;}
+100%{opacity:0.3;}
+}
+.splash-dev{
+position:absolute;
+bottom:70px;
+
+left:0;
+right:0;
+text-align:center;
+
+display:flex;
+flex-direction:column;
+align-items:center;
+gap:6px;
+
+animation:devGlow 2s infinite alternate;
+}
+
+.splash-dev span{
+font-size:12px;
+letter-spacing:4px;
+opacity:0.5;
+}
+
+.splash-dev strong{
+font-size:18px;
+letter-spacing:3px;
+font-weight:bold;
+
+background:linear-gradient(
+90deg,
+#ffffff,
+#ffd60a,
+#4cc9f0
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 15px rgba(255,255,255,0.3);
+}
+
+@keyframes devGlow{
+
+0%{
+opacity:0.5;
+transform:scale(1);
+}
+
+100%{
+opacity:1;
+transform:scale(1.05);
+}
+
+}
+
+.piece{
+display:grid;
+gap:2px;
+padding:8px;
+border-radius:12px;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(10px);
+touch-action:none;
+}
+.menu-dev{
+position:absolute;
+bottom:35px;
+
+left:0;
+right:0;
+text-align:center;
+
+font-size:13px;
+letter-spacing:3px;
+
+opacity:0.65;
+
+background:linear-gradient(
+90deg,
+#ffffff,
+#ffd60a,
+#4cc9f0
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+
+text-shadow:
+0 0 12px rgba(255,255,255,0.25);
+
+animation:menuDevGlow 2s infinite alternate;
+}
+
+@keyframes menuDevGlow{
+
+0%{
+opacity:0.4;
+transform:scale(1);
+}
+
+100%{
+opacity:1;
+transform:scale(1.03);
+}
+}
+
+#aboutScreen{
+position:fixed;
+inset:0;
+
+display:none;
+
+justify-content:center;
+align-items:center;
+
+background:rgba(0,0,0,0.75);
+
+backdrop-filter:blur(10px);
+
+z-index:999999999;
+}
+
+.about-card{
+
+width:90%;
+max-width:360px;
+
+padding:30px;
+
+border-radius:25px;
+
+background:rgba(255,255,255,0.08);
+
+border:1px solid rgba(255,255,255,0.15);
+
+box-shadow:
+0 0 40px rgba(76,201,240,0.3);
+
+text-align:center;
+
+animation:aboutPop 0.3s ease;
+}
+
+@keyframes aboutPop{
+
+0%{
+transform:scale(0.7);
+opacity:0;
+}
+
+100%{
+transform:scale(1);
+opacity:1;
+}
+}
+
+.about-card h2{
+
+font-size:40px;
+
+margin-bottom:10px;
+
+background:linear-gradient(
+90deg,
+#ffd60a,
+#ff006e,
+#4cc9f0
+);
+
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.about-version{
+
+margin-bottom:20px;
+
+opacity:0.7;
+
+letter-spacing:2px;
+}
+
+.about-card p{
+
+line-height:1.6;
+
+font-size:15px;
+
+opacity:0.9;
+
+margin-bottom:25px;
+}
+
+.about-devname{
+
+font-size:18px;
+
+font-weight:bold;
+
+letter-spacing:2px;
+
+margin-bottom:25px;
+
+color:#ffd60a;
+}
+
+.close-about{
+
+width:100%;
+
+padding:16px;
+
+border:none;
+
+border-radius:15px;
+
+font-size:18px;
+
+font-weight:bold;
+
+color:white;
+
+background:linear-gradient(
+90deg,
+#ff006e,
+#9333ea
+);
+}
+
+.about-btn{
+background:linear-gradient(
+90deg,
+#06b6d4,
+#3b82f6
+);
+}
+#reviveScreen{
+position:fixed;
+inset:0;
+
+display:none;
+
+justify-content:center;
+align-items:center;
+
+background:rgba(0,0,0,0.7);
+
+backdrop-filter:blur(10px);
+
+z-index:999999999;
+}
+
+.revive-card{
+
+width:90%;
+max-width:340px;
+
+padding:30px;
+
+border-radius:25px;
+
+background:rgba(255,255,255,0.08);
+
+border:1px solid rgba(255,255,255,0.15);
+
+box-shadow:
+0 0 40px rgba(255,214,10,0.3);
+
+text-align:center;
+
+animation:aboutPop 0.3s ease;
+}
+
+.revive-title{
+
+font-size:42px;
+
+font-weight:bold;
+
+margin-bottom:15px;
+
+color:#ff4444;
+
+text-shadow:
+0 0 20px rgba(255,0,0,0.5);
+}
+
+.revive-score{
+
+font-size:22px;
+
+margin-bottom:20px;
+
+font-weight:bold;
+}
+
+.revive-text{
+
+opacity:0.8;
+
+margin-bottom:25px;
+}
+
+.revive-btn,
+.home-btn{
+
+width:100%;
+
+padding:16px;
+
+border:none;
+
+border-radius:16px;
+
+font-size:18px;
+
+font-weight:bold;
+
+color:white;
+
+margin-top:12px;
+}
+
+.revive-btn{
+background:linear-gradient(
+90deg,
+#ffd60a,
+#ff9f1c
+);
+}
+
+.home-btn{
+background:linear-gradient(
+90deg,
+#ff006e,
+#8338ec
+);
+}
+
+.volume-box{
+
+margin-top:20px;
+
+width:90%;
+
+max-width:320px;
+
+padding:20px;
+
+border-radius:20px;
+
+background:rgba(255,255,255,0.08);
+
+backdrop-filter:blur(10px);
+}
+
+.volume-title{
+
+margin-top:10px;
+
+margin-bottom:8px;
+
+font-weight:bold;
+}
+
+input[type="range"]{
+
+width:100%;
+
+height:8px;
+
+border-radius:10px;
+
+outline:none;
+
+appearance:none;
+
+background:
+rgba(255,255,255,0.2);
+}
+
+input[type="range"]::-webkit-slider-thumb{
+
+appearance:none;
+
+width:20px;
+
+height:20px;
+
+border-radius:50%;
+
+background:#ffd60a;
+
+box-shadow:
+0 0 10px rgba(255,214,10,0.8);
+
+cursor:pointer;
+}
+
+html,body{
+background:#0f172a !important;
+}
+
+#gameContainer{
+position:relative;
+z-index:2;
+backdrop-filter:blur(10px);
+-webkit-backdrop-filter:blur(10px);
+}
+
+</style>
+</head>
+<body>
+ 
+<div id="splashScreen">
+
+    <div class="splash-logo">
+        GLOWCUBE
+    </div>
+
+    <div class="splash-text">
+        NEON PUZZLE EXPERIENCE
+   <div class="splash-dev">
+    <span>A GAME BY</span>
+    <strong>FATUR ENTERTAINMENT</strong>
+</div>
+    </div>
+
+</div>
+<div class="bg-glow"></div>
+
+<div id="menuScreen">
+<div class="logo">GLOWCUBE</div>
+<div class="menu-box">
+<button class="menu-btn play-btn" onclick="startGame()">▶ MULAI GAME</button>
+<button class="menu-btn score-btn" onclick="openHighScore()">🏆 SCORE TERTINGGI</button>
+<button class="menu-btn about-btn" onclick="openAbout()">ℹ ABOUT</button>
+<div class="volume-box">
+
+<div class="volume-title">
+🎵 MUSIC
+</div>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value="0.5"
+id="musicSlider"
+oninput="changeMusicVolume(this.value)"
+>
+
+<div class="volume-title">
+🔊 SFX
+</div>
+
+<input
+type="range"
+min="0"
+max="1"
+step="0.01"
+value="1"
+id="sfxSlider"
+oninput="changeSfxVolume(this.value)"
+>
+
+</div>
+<div class="menu-dev">
+    A GAME BY FATUR ENTERTAINMENT
+</div>
+</div>
+<div id="highScoreScreen">
+
+    <div class="highscore-card">
+
+        <div class="highscore-title">
+            🏆 HIGH SCORE
+        </div>
+
+        <div class="highscore-value" id="highScoreValue">
+            0
+        </div>
+
+        <div class="highscore-glow"></div>
+
+        <button class="back-btn" onclick="closeHighScore()">
+            ← KEMBALI
+        </button>
+
+    </div>
+
+</div>
+</div>
+
+<div id="gameContainer">
+<div id="topMenu">
+    <button id="menuBtn" onclick="toggleMenu()">☰</button>
+
+    <div id="dropdownMenu">
+        <button onclick="goHome()">🏠 Home</button>
+        <button onclick="re()">🔄 Restart</button>
+    </div>
+</div>
+<h1>GLOWCUBE</h1>
+<div class="info-row">
+<div class="score-box">🎯 Score: <span id="score">0</span></div>
+<div class="level-box">⭐ Level: <span id="level">1</span></div>
+<div class="coin-box">🪙 Coin: <span id="coin">0</span></div>
+</div>
+<div id="board"></div>
+<div id="nextBlocks"></div>
+<div id="pieces"></div>
+</div>
+<div id="gameOverScreen">
+
+    <div class="gameover-card">
+
+        <div class="gameover-title">
+            GAME OVER
+        </div>
+
+        <div class="final-score-label">
+            SCORE
+        </div>
+        <div class="final-score">
+    <span id="finalScore">0</span>
+</div>
+        <div class="gameover-buttons">
+
+            <button class="restart-btn" onclick="closeGameOverAndRestart()">
+                🔄 MAIN LAGI
+            </button>
+
+            <button class="home-btn" onclick="goHomeFromGameOver()">
+                🏠 HOME
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+<audio id="placeSound" preload="auto">
+<source src="klik.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="clearSound" preload="auto">
+<source src="clear.mp3" type="audio/mpeg">
+</audio>
+
+<!-- MUSIC GAME -->
+<audio id="bgMusic" loop>
+<source src="musik.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+
+function startGame(){
+
+    document.getElementById('menuScreen').style.display='none';
+
+    document.getElementById('gameContainer').style.display='flex';
+
+    bgMusic.volume = musicVolume;
+
+    setTimeout(()=>{
+        bgMusic.play().catch(()=>{});
+    },200);
+
+    // CEK kalau game belum pernah dibuat
+    if(!gameStarted){
+
+        createBoard();
+
+        generateQueue();
+
+        renderNextBlocks();
+
+        createPieces();
+
+        gameStarted = true;
+    }
+}
+
+function openHighScore(){
+
+    let highScore =
+    localStorage.getItem('glowcube_highscore') || 0;
+
+    document.getElementById('highScoreValue').innerText =
+    highScore;
+
+    document.getElementById('highScoreScreen').style.display =
+    'flex';
+}
+
+function closeHighScore(){
+
+    document.getElementById('highScoreScreen').style.display =
+    'none';
+}
+
+const board = document.getElementById('board');
+const piecesContainer = document.getElementById('pieces');
+const nextBlocks = document.getElementById('nextBlocks');
+const scoreText = document.getElementById('score');
+const levelText = document.getElementById('level');
+const coinText = document.getElementById('coin');
+const placeSound = document.getElementById('placeSound');
+const clearSound = document.getElementById('clearSound');
+const bgMusic = document.getElementById('bgMusic');
+let musicVolume = 0.10;
+
+let sfxVolume = 1;
+const boardSize = 8;
+let score = 0;
+let level = 1;
+let combo = 0;
+let coin =
+parseInt(localStorage.getItem('glowcube_coin')) || 0;
+
+let gameStarted = false;
+
+function startGame(){
+    document.getElementById('menuScreen').style.display='none';
+
+    document.getElementById('gameContainer').style.display='flex';
+
+    bgMusic.volume = musicVolume;
+
+    setTimeout(()=>{
+        bgMusic.play().catch(()=>{});
+    },200);
+
+    // kalau belum pernah mulai
+    if(!gameStarted){
+
+        createBoard();
+
+        generateQueue();
+
+        renderNextBlocks();
+
+        createPieces();
+
+        gameStarted = true;
+    }
+}
+
+let grid = [];
+let nextQueue = [];
+let revived = false;
+
+const colors = ['#ff006e','#8338ec','#3a86ff','#06d6a0','#ffbe0b','#fb5607'];
+const shapes = [
+
+[[1]],
+
+[[1,1]],
+[[1],[1]],
+
+[[1,1,1]],
+[[1],[1],[1]],
+
+[[1,1],[1,1]],
+
+[[1,0],[1,1]],
+[[0,1],[1,1]],
+
+[[1,1,1],[0,1,0]],
+
+[[1,1,1],[1,0,0]],
+[[1,1,1],[0,0,1]],
+
+// Z BLOCK
+[[1,1,0],
+ [0,1,1]],
+
+[[0,1,1],
+ [1,1,0]]
+
+];
+
+function randomColor(){ return colors[Math.floor(Math.random()*colors.length)]; }
+function toggleMenu(){
+
+    const menu = document.getElementById('dropdownMenu');
+
+    if(menu.style.display === 'flex'){
+        menu.style.display = 'none';
+    }else{
+        menu.style.display = 'flex';
+    }
+}
+
+function showBigCombo(text){
+
+    const div = document.createElement('div');
+
+    div.className = 'big-combo-text';
+
+    div.innerText = text;
+
+    document.body.appendChild(div);
+
+    setTimeout(()=>{
+        div.remove();
+    },1000);
+}
+function isBoardDanger(){
+
+    let filled = 0;
+
+    for(let r=0; r<boardSize; r++){
+        for(let c=0; c<boardSize; c++){
+
+            if(grid[r][c] !== 0){
+                filled++;
+            }
+
+        }
+    }
+
+    // kalau board terisi 70%
+    return filled >= 45;
+}
+function openAbout(){
+
+    document.getElementById('aboutScreen').style.display='flex';
+}
+
+function closeAbout(){
+
+    document.getElementById('aboutScreen').style.display='none';
+}
+function reviveGame(){
+
+    if(coin < 50){
+
+        alert('Coin tidak cukup!');
+        return;
+    }
+
+    coin -= 50;
+    localStorage.setItem('glowcube_coin', coin);
+    coinText.innerText = coin;
+
+    revived = true;
+
+    document.getElementById('reviveScreen').style.display='none';
+}
+
+function realGameOver(){
+
+    let highScore =
+    localStorage.getItem('glowcube_highscore') || 0;
+
+    if(score > highScore){
+
+        localStorage.setItem(
+            'glowcube_highscore',
+            score
+        );
+    }
+
+    alert('GAME OVER\n\nSCORE : '+score);
+
+    re();
+}
+
+function goHome(){
+
+    document.getElementById('reviveScreen').style.display='none';
+
+    document.getElementById('gameOverScreen').style.display='none';
+
+    document.getElementById('gameContainer').style.display='none';
+
+    document.getElementById('menuScreen').style.display='flex';
+
+    document.getElementById('dropdownMenu').style.display='none';
+}
+ function changeMusicVolume(value){
+
+    musicVolume = value;
+
+    bgMusic.volume = value;
+}
+
+function changeSfxVolume(value){
+
+    sfxVolume = value;
+
+    placeSound.volume = value;
+
+    clearSound.volume = value;
+}
+function createBoard(){
+board.innerHTML=''; grid=[];
+for(let row=0;row<boardSize;row++){
+grid[row]=[];
+for(let col=0;col<boardSize;col++){
+grid[row][col]=0;
+const cell = document.createElement('div');
+cell.classList.add('cell');
+cell.dataset.row=row; cell.dataset.col=col;
+board.appendChild(cell);
+}}}
+
+function randomShape(){
+
+    // HITUNG BLOCK TERISI
+    let filled = 0;
+
+    for(let r=0; r<boardSize; r++){
+        for(let c=0; c<boardSize; c++){
+
+            if(grid[r][c] !== 0){
+                filled++;
+            }
+
+        }
+    }
+
+    // MODE BAHAYA
+    if(filled >= 45){
+
+        const rescueShapes = [
+
+            [[1]],
+
+            [[1,1]],
+
+            [[1],[1]],
+
+            [[1,1],[1,1]]
+
+        ];
+
+        return JSON.parse(
+            JSON.stringify(
+                rescueShapes[
+                    Math.floor(Math.random()*rescueShapes.length)
+                ]
+            )
+        );
+    }
+
+    // NORMAL
+    return JSON.parse(
+        JSON.stringify(
+            shapes[
+                Math.floor(Math.random()*shapes.length)
+            ]
+        )
+    );
+}
+
+function generateQueue(){ nextQueue=[]; for(let i=0;i<3;i++) nextQueue.push(randomShape()); }
+
+function renderNextBlocks(){
+nextBlocks.innerHTML='';
+nextQueue.forEach(shape=>{
+const preview = document.createElement('div');
+preview.className='next-piece';
+preview.style.gridTemplateColumns=`repeat(${shape[0].length},16px)`;
+shape.forEach(row=>{row.forEach(cell=>{
+const block = document.createElement('div');
+block.style.width='16px'; block.style.height='16px'; block.style.borderRadius='4px';
+cell ? (block.style.background=randomColor()) : (block.style.visibility='hidden');
+preview.appendChild(block);
+})});
+nextBlocks.appendChild(preview);
+});
+}
+
+function createPieces(){
+piecesContainer.innerHTML='';
+for(let i=0;i<3;i++){
+const shape = nextQueue.shift();
+const piece = document.createElement('div');
+piece.classList.add('piece');
+piece.dataset.shape=JSON.stringify(shape);
+piece.style.gridTemplateColumns=`repeat(${shape[0].length},28px)`;
+shape.forEach(row=>{row.forEach(cell=>{
+const block = document.createElement('div');
+if(cell){ block.classList.add('block'); block.style.background=randomColor(); }
+else block.style.visibility='hidden';
+piece.appendChild(block);
+})});
+enableTouch(piece);
+piecesContainer.appendChild(piece);
+}
+generateQueue(); renderNextBlocks();
+}
+
+function enableTouch(piece){
+let currentX=0, currentY=0;
+piece.addEventListener('touchstart',e=>{
+const touch=e.touches[0];
+piece.style.position='fixed'; piece.style.zIndex='99999'; piece.style.pointerEvents='none';
+currentX=touch.clientX; currentY=touch.clientY;
+movePiece(touch,piece);
+},{passive:false});
+
+piece.addEventListener('touchmove',e=>{
+e.preventDefault(); const touch=e.touches[0];
+currentX=touch.clientX; currentY=touch.clientY;
+movePiece(touch,piece); clearHighlight();
+const target = document.elementFromPoint(currentX,currentY-100);
+if(target&&target.classList.contains('cell')){
+const row=parseInt(target.dataset.row), col=parseInt(target.dataset.col);
+highlightShape(JSON.parse(piece.dataset.shape),row,col);
+}
+},{passive:false});
+
+piece.addEventListener('touchend',()=>{
+const target = document.elementFromPoint(currentX,currentY-100);
+if(target&&target.classList.contains('cell')){
+const row=parseInt(target.dataset.row), col=parseInt(target.dataset.col);
+const shape=JSON.parse(piece.dataset.shape);
+if(canPlace(shape,row,col)){
+placeShape(shape,row,col); piece.remove(); clearLines();
+if(document.querySelectorAll('.piece').length===0) createPieces();
+checkGameOver();
+}
+}
+clearHighlight();
+piece.style.position='relative'; piece.style.left='0px'; piece.style.top='0px'; piece.style.pointerEvents='auto';
+},{passive:false});
+}
+
+function movePiece(touch,piece){
+const x = touch.clientX - (piece.offsetWidth/2);
+const y = touch.clientY - (piece.offsetHeight/2) - 100;
+piece.style.left=x+'px'; piece.style.top=y+'px';
+}
+
+function highlightShape(shape,row,col){
+clearHighlight();
+for(let r=0;r<shape.length;r++){for(let c=0;c<shape[r].length;c++){
+if(shape[r][c]){
+let newRow=row+r, newCol=col+c;
+if(newRow<boardSize&&newCol<boardSize){
+const index=newRow*boardSize+newCol; const cell=board.children[index];
+grid[newRow][newCol]===0 ? (cell.style.outline='2px solid white',cell.style.background='rgba(255,255,255,0.25)') : (cell.style.outline='2px solid red',cell.style.background='rgba(255,0,0,0.3)');
+}
+}
+}}
+}
+
+function clearHighlight(){
+document.querySelectorAll('.cell').forEach(cell=>{
+cell.style.outline='none';
+if(!cell.classList.contains('filled')) cell.style.background='rgba(255,255,255,0.08)';
+});
+}
+
+function canPlace(shape,row,col){
+for(let r=0;r<shape.length;r++){for(let c=0;c<shape[r].length;c++){
+if(shape[r][c]){
+let newRow=row+r, newCol=col+c;
+if(newRow>=boardSize||newCol>=boardSize||grid[newRow][newCol]) return false;
+}
+}}
+return true;
+}
+
+function createParticles(x,y,color){
+for(let i=0;i<6;i++){
+const particle=document.createElement('div');
+particle.className='particle'; particle.style.background=color;
+particle.style.left=x+'px'; particle.style.top=y+'px';
+particle.style.setProperty('--x',(Math.random()*200-100)+'px');
+particle.style.setProperty('--y',(Math.random()*200-100)+'px');
+document.body.appendChild(particle);
+setTimeout(()=>particle.remove(),800);
+}}
+
+function placeShape(shape,row,col){
+try{placeSound.pause();placeSound.currentTime=0;placeSound.play().catch(e=>{});}catch(e){}
+for(let r=0;r<shape.length;r++){for(let c=0;c<shape[r].length;c++){
+if(shape[r][c]){
+let newRow=row+r, newCol=col+c;
+grid[newRow][newCol]=randomColor();
+const index=newRow*boardSize+newCol;
+board.children[index].classList.add('filled');
+board.children[index].style.background=grid[newRow][newCol];
+board.children[index].style.boxShadow=`0 0 20px ${grid[newRow][newCol]}`;
+const rect=board.children[index].getBoundingClientRect();
+createParticles(rect.left,rect.top,grid[newRow][newCol]);
+}
+}}
+score+=10; scoreText.innerText=score;
+}
+
+function clearLines(){
+    let adaYangHapus = false;
+
+    // 🔹 CEK BARIS MENDATAR (KIRI -> KANAN) - TETAP SAMA
+    for(let r = 0; r < boardSize; r++){
+        let penuh = true;
+        for(let c = 0; c < boardSize; c++){
+            if(grid[r][c] === 0) penuh = false;
+        }
+        if(penuh){
+            adaYangHapus = true;
+            // Hapus semua blok di baris ini
+            for(let c = 0; c < boardSize; c++){
+                grid[r][c] = 0;
+                const idx = r * boardSize + c;
+                board.children[idx].classList.add('explode');
+                setTimeout(()=>{
+                    board.children[idx].classList.remove('filled','explode');
+                    board.children[idx].style.background = 'rgba(255,255,255,0.08)';
+                    board.children[idx].style.boxShadow = 'none';
+                }, 300);
+            }
+            score += 100;
+            coin += 10;
+            localStorage.setItem('glowcube_coin', coin);
+        }
+    }
+
+    // 🔹 CEK BARIS TEGAK / KOLOM (ATAS -> BAWAH) - INI YANG DIPERBAIKI TOTAL
+    for(let c = 0; c < boardSize; c++){ // c = kolom
+        let penuh = true;
+        for(let r = 0; r < boardSize; r++){ // r = baris
+            if(grid[r][c] === 0) penuh = false; // CEK DARI ATAS KE BAWAH
+        }
+        if(penuh){ // KALAU PENUH SEMUA
+            adaYangHapus = true;
+            // Hapus semua blok di kolom ini
+            for(let r = 0; r < boardSize; r++){
+                grid[r][c] = 0;
+                const idx = r * boardSize + c;
+                board.children[idx].classList.add('explode');
+                setTimeout(()=>{
+                    board.children[idx].classList.remove('filled','explode');
+                    board.children[idx].style.background = 'rgba(255,255,255,0.08)';
+                    board.children[idx].style.boxShadow = 'none';
+                }, 300);
+            }
+            score += 100;
+            coin += 10;
+            localStorage.setItem('glowcube_coin', coin);
+        }
+    }
+
+    // ✅ BAGIAN BAWAH INI DIJAGA SAMA PERSIS
+    if(adaYangHapus){
+        try{clearSound.currentTime=0; clearSound.play();}catch(e){}
+        combo++;
+        showCombo('COMBO x'+combo);
+        if(combo >= 3){
+    showBigCombo('WOW!');
+}
+
+if(combo >= 5){
+    showBigCombo('AMAZING!');
+}
+
+if(combo >= 7){
+    showBigCombo('LEGENDARY!');
+}
+
+if(combo >= 10){
+    showBigCombo('GODLIKE!!');
+}
+        board.classList.add('shake');
+        setTimeout(()=>board.classList.remove('shake'),300);
+        if(combo >= 3){
+            document.body.classList.add('flash');
+            setTimeout(()=>document.body.classList.remove('flash'),500);
+        }
+        if(score >= level * 10000){
+            level++;
+            levelText.innerText = level;
+            showCombo('LEVEL UP');
+        }
+    } else {
+        combo = 0;
+    }
+    scoreText.innerText = score;
+    coinText.innerText = coin;
+}
+
+
+function showCombo(text){
+const div=document.createElement('div'); div.className='combo-text'; div.innerText=text;
+document.body.appendChild(div); setTimeout(()=>div.remove(),1000);
+}
+
+function checkGameOver(){
+const pieces=document.querySelectorAll('.piece'); let possible=false;
+pieces.forEach(piece=>{
+const shape=JSON.parse(piece.dataset.shape);
+for(let row=0;row<boardSize;row++) for(let col=0;col<boardSize;col++) if(canPlace(shape,row,col)) possible=true;
+});
+if(!possible){
+endGame();
+}}
+
+function endGame(){
+
+    let highScore =
+    localStorage.getItem('glowcube_highscore') || 0;
+
+    if(score > highScore){
+
+        localStorage.setItem(
+            'glowcube_highscore',
+            score
+        );
+    }
+
+    // tampilkan score akhir
+    document.getElementById('finalScore').innerText = score;
+    document.getElementById('reviveFinalScore').innerText = score;
+    // buka game over
+    document.getElementById('gameOverScreen').style.display =
+    'flex';
+}
+
+function re(resetCoin = false){
+
+    gameStarted = false;
+
+    revived = false;
+
+    score = 0;
+    level = 1;
+    combo = 0;
+
+    // coin hanya reset kalau diminta
+    if(resetCoin){
+        coin = 0;
+    }
+
+    scoreText.innerText = score;
+    levelText.innerText = level;
+    coinText.innerText = coin;
+
+    createBoard();
+
+    generateQueue();
+
+    renderNextBlocks();
+
+    createPieces();
+}
+function closeGameOverAndRestart(){
+
+    document.getElementById('gameOverScreen').style.display =
+    'none';
+
+    re();
+}
+
+
+</script>
+<div id="aboutScreen">
+
+    <div class="about-card">
+
+        <h2>GLOWCUBE</h2>
+
+        <div class="about-version">
+            VERSION 1.1
+        </div>
+
+        <p>
+            GlowCube adalah game puzzle neon modern
+            yang terinspirasi dari block puzzle klasik
+            dengan visual glow premium dan gameplay adiktif.
+        </p>
+
+        <div class="about-devname">
+            A GAME BY<br>
+            FATUR ENTERTAINMENT
+        </div>
+
+        <button class="close-about" onclick="closeAbout()">
+            CLOSE
+        </button>
+        </div>
+
+    </div>
+
+<!-- REVIVE SCREEN -->
+<div id="reviveScreen">
+
+    <div class="revive-card">
+
+        <div class="revive-title">
+            GAME OVER
+        </div>
+
+        <div class="revive-score">
+            SCORE : <span id="reviveFinalScore">0</span>
+        </div>
+
+        <div class="revive-text">
+            Gunakan 50 Coin untuk lanjut?
+        </div>
+
+        <button class="revive-btn" onclick="reviveGame()">
+            REVIVE -50 COIN
+        </button>
+
+        <button class="home-btn" onclick="goHome()">
+            HOME
+        </button>
+ 
+</div>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.log('SW gagal:',err));
+  });
+}
+</script>
+</body>
+</html>
